@@ -2,17 +2,17 @@
   <header class="app-header">
       <h1 class="title">Chat Name</h1>
     </header>
-    <ChatPage />
+    <LoginPage />
 </template>
 
 
 <script>
-import ChatPage from './components/ChatPage.vue'
+import LoginPage from './components/LoginPage.vue'
 
 export default {
   name: 'App',
   components: {
-    ChatPage
+    LoginPage
   }
 }
 </script>
