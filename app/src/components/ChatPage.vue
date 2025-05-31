@@ -3,8 +3,17 @@
     <div class="header"></div>
 
     <div class="messages">
-      <div class="message message--received">Привет! Как дела?</div>
-      <div class="message message--sent">Привет! Всё хорошо, спасибо 😊</div>
+      <div v-for="(msg, index) in messages" :key="msg.id" class="message-group">
+        <div
+          v-if="shouldShowTimestamp(msg.timestamp, index > 0 ? messages[index - 1].timestamp : null)"
+          class="timestamp"
+        >
+          {{ formatTimestamp(msg.timestamp) }}
+        </div>
+        <div :class="['message', msg.isSent ? 'message--sent' : 'message--received']">
+          {{ msg.text }}
+        </div>
+      </div>
     </div>
 
     <div class="input-area">
@@ -14,8 +23,9 @@
           type="text"
           placeholder="Type your message..."
           class="message-input"
+          @keyup.enter="sendMessage"
         />
-        <button class="send-button"></button>
+        <button class="send-button" @click="sendMessage"></button>
       </div>
     </div>
   </div>
@@ -26,7 +36,74 @@ export default {
   name: 'ChatPage',
   data() {
     return {
-      message: ''
+      message: '', 
+      messages: [ 
+        { id: 1, text: 'Привет! Как дела?', isSent: false, timestamp: new Date('2025-05-30T10:30:00') }, 
+        { id: 2, text: 'Привет! Всё хорошо, спасибо 😊', isSent: true, timestamp: new Date('2025-05-31T12:05:00') }, 
+        { id: 3, text: 'Чем занимаешься?', isSent: false, timestamp: new Date('2025-05-31T12:05:30') }, 
+        { id: 4, text: 'Работаю над Vue проектом.', isSent: true, timestamp: new Date('2025-05-31T12:06:15') }, 
+        { id: 5, text: 'Понятно.', isSent: false, timestamp: new Date('2025-05-31T12:06:45') }, 
+        { id: 6, text: 'Как успехи?', isSent: true, timestamp: new Date() },
+      ]
+    }
+  },
+  methods: {
+    shouldShowTimestamp(currentTimestamp, prevTimestamp) {
+      if (!prevTimestamp) {
+        return true;
+      }
+
+      const current = new Date(currentTimestamp);
+      const prev = new Date(prevTimestamp);
+
+      if (current.toDateString() !== prev.toDateString()) {
+        return true;
+      }
+
+      const diffMinutes = Math.abs(current.getTime() - prev.getTime()) / (1000 * 60);
+
+      return diffMinutes >= 2 || current.getHours() !== prev.getHours();
+    },
+
+    formatTimestamp(timestamp) {
+      const now = new Date();
+      const messageDate = new Date(timestamp);
+
+      const isToday = now.toDateString() === messageDate.toDateString();
+
+      if (isToday) {
+        return messageDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        const options = {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        };
+        return messageDate.toLocaleDateString('ru-RU', options)
+                            .replace(/\./g, '')
+                            .replace(',', '') 
+                            .trim(); 
+      }
+    },
+    sendMessage() {
+      if (this.message.trim() === '') {
+        return; 
+      }
+
+      const newMessage = {
+        id: this.messages.length + 1,
+        text: this.message.trim(),
+        isSent: true,
+        timestamp: new Date(), 
+      };
+
+      this.messages.push(newMessage);
+      this.message = '';
+      this.$nextTick(() => {
+        const messagesContainer = this.$el.querySelector('.messages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
     }
   }
 }
@@ -59,6 +136,23 @@ export default {
   gap: 10px;
   padding: 10px 20px 120px;
   box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
+}
+
+.message-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.timestamp {
+  color: #ffff;
+  font-size: 0.75rem;
+  margin-bottom: 5px;
+  text-align: center;
+  width: 100%;
+  font-family: 'Roboto', sans-serif;
 }
 
 .message {
@@ -89,6 +183,8 @@ export default {
   width: 90%;
   max-width: 1000px;
   box-sizing: border-box;
+  background-color: #292F3F;
+  padding-top: 10px;
 }
 
 .input-wrapper {
@@ -126,7 +222,7 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 0;
-   background-image: url('@/assets/speech-bubble.svg');
+  background-image: url('@/assets/speech-bubble.svg');
   background-repeat: no-repeat;
   background-position: center;
   background-size: 20px 20px;
@@ -148,6 +244,5 @@ export default {
     height: 30px;
     font-size: 1rem;
   }
-
 }
 </style>

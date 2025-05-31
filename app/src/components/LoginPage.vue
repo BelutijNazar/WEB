@@ -10,6 +10,7 @@
       <router-link to="/chat" class="full-width-link">
         <button class="btn">Login</button>
       </router-link>
+      <router-link to ="/" class="link">Registration</router-link>
     </div>
   </div>
 </template>
