@@ -1,5 +1,6 @@
 <template>
-  <div class="login-wrapper">
+  <div class="reg-wrapper">
+   
     <div class="form-container">
       <label class="label">Login</label>
       <input type="text" class="input" />
@@ -7,16 +8,21 @@
       <label class="label">Password</label>
       <input type="password" class="input" />
 
+      <label class="label">Password Check</label>
+      <input type="password" class="input" />
+
       <router-link to="/chat" class="full-width-link">
-        <button class="btn">Login</button>
+        <button class="btn">Registration</button>
       </router-link>
+      
+      <router-link to ="/log" class="link">Already have an account?</router-link>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'LoginPage'
+  name: 'RegistrationPage'
 }
 </script>
 
@@ -24,14 +30,14 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Abel&family=Roboto&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Abel&family=Roboto:wght@300;400;700&display=swap');
 
-.login-wrapper {
+.reg-wrapper {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: center; 
+  align-items: center;     
   font-family: 'Abel', sans-serif;
-  padding: 20px;
+  padding: 20px; 
 }
 
 .form-container {
@@ -55,15 +61,6 @@ export default {
   padding: 10px 15px;
   color: #818182;
   font-size: 1rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.full-width-link {
-  width: 100%;
-  display: block;
-  text-decoration: none;
-  color: inherit;
 }
 
 .btn {
@@ -79,4 +76,9 @@ export default {
   width: 100%;
   box-sizing: border-box;
 }
+.link{
+  color:#ffff;
+  text-align: center;
+}
+
 </style>

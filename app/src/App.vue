@@ -2,18 +2,13 @@
   <header class="app-header">
       <h1 class="title">Chat Name</h1>
     </header>
-    <LoginPage />
+    <router-view/>
 </template>
 
 
 <script>
-import LoginPage from './components/LoginPage.vue'
-
 export default {
-  name: 'App',
-  components: {
-    LoginPage
-  }
+  name: 'RegistrationPage',
 }
 </script>
 <style>
