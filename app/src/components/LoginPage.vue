@@ -10,6 +10,7 @@
       <router-link to="/chat" class="full-width-link">
         <button class="btn">Login</button>
       </router-link>
+      <router-link to ="/" class="link">Registration</router-link>
     </div>
   </div>
 </template>
@@ -78,5 +79,9 @@ export default {
   transition: background-color 0.2s ease;
   width: 100%;
   box-sizing: border-box;
+}
+.link{
+  color:#ffff;
+  text-align: center;
 }
 </style>
