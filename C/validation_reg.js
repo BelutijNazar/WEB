@@ -6,11 +6,11 @@ export function validateEmail(email) {
     if (!emailRegex.test(email)) {
         return 'Пожалуйста, введите корректный email.';
     }
-    return ''; // Пустая строка означает отсутствие ошибки
+    return ''; 
 }
 
 export function validatePassword(password) {
-    // Минимум 8 символов, хотя бы 1 цифровая, верхний и нижний регистр
+    
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!password) {
         return 'Пароль не может быть пустым.';
@@ -21,7 +21,7 @@ export function validatePassword(password) {
     if (!passwordRegex.test(password)) {
         return 'Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву и одну цифру.';
     }
-    return ''; // Пустая строка означает отсутствие ошибки
+    return ''; 
 }
 
 export function validateConfirmPassword(password, confirmPassword) {
@@ -31,5 +31,5 @@ export function validateConfirmPassword(password, confirmPassword) {
     if (password !== confirmPassword) {
         return 'Пароли не совпадают.';
     }
-    return ''; // Пустая строка означает отсутствие ошибки
+    return ''; 
 }
