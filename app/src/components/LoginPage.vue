@@ -80,7 +80,7 @@ export default {
 
       // Если клиентская валидация успешна, отправляем запрос на бэкенд
       try {
-        const response = await fetch('http://localhost:3000/api/auth/login', { // URL вашего бэкенд API для входа
+        const response = await fetch('http://192.168.100.4:3000/api/auth/login', { // URL вашего бэкенд API для входа
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
