@@ -149,7 +149,6 @@ export default {
   align-items: center;
   font-family: 'Abel', sans-serif;
   padding: 20px;
-  background-color: #333; /* Добавлен темный фон для всего wrapper-а */
   color: #eee; /* Цвет текста по умолчанию */
 }
 
@@ -159,10 +158,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background-color: #222; /* Темнее фон для контейнера формы */
   padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .label {
@@ -173,7 +169,6 @@ export default {
 }
 
 .input {
-  background-color: #444; /* Темнее фон для инпутов */
   border: 1px solid #666; /* Более мягкая обводка */
   border-radius: 10px;
   padding: 12px 15px;
@@ -205,7 +200,7 @@ export default {
 }
 
 .link {
-  color: #9EC0F0; /* Измененный цвет ссылки для лучшей читаемости на темном фоне */
+  color: #FFF; /* Измененный цвет ссылки для лучшей читаемости на темном фоне */
   text-align: center;
   text-decoration: none; /* Убираем подчеркивание */
   font-size: 0.9rem;

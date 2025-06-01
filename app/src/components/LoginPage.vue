@@ -205,7 +205,7 @@ export default {
 }
 
 .link { /* Добавляем стиль для ссылки "Don't have an account?" */
-  color: #818182; /* Цвет, соответствующий вашему текущему стилю input */
+  color: #FFFF; /* Цвет, соответствующий вашему текущему стилю input */
   text-align: center;
   text-decoration: none;
   font-size: 0.9rem;
