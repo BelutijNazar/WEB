@@ -1,5 +1,5 @@
 // router/index.js
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import RegistrationPage from '../components/RegistrationPage.vue'; 
 import LoginPage from '../components/LoginPage.vue'; 
 import ChatPage from '../components/ChatPage.vue'; 
@@ -23,7 +23,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes,
 });
 
