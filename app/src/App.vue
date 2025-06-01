@@ -1,7 +1,4 @@
 <template>
-  <header class="app-header">
-      <h1 class="title">Chat Name</h1>
-    </header>
     <router-view/>
 </template>
 

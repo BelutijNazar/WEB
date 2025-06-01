@@ -12,9 +12,7 @@
       <div v-if="generalError" class="error-message general-error">{{ generalError }}</div>
       <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
 
-      <router-link to="#" class="full-width-link">
-        <button class="btn" @click.prevent="login">Login</button>
-      </router-link>
+      <button class="btn" @click="login">Login</button>
 
       <router-link to="/" class="link">Don't have an account?</router-link>
     </div>
@@ -22,9 +20,6 @@
 </template>
 
 <script>
-// ВАЖНО: Убедитесь, что путь к validation_enter.js верен
-// Он должен быть '../../C/validation_enter' если LoginPage.vue в src/components,
-// а validation_enter.js в WEB/C/
 import { validateLoginNickname, validateLoginPassword } from '../../../C/validation_enter';
 
 export default {
@@ -58,29 +53,24 @@ export default {
 
       let isValid = true;
 
-      // 1. Клиентская валидация никнейма с использованием функции из validation_enter.js
       const nicknameValidationResult = validateLoginNickname(this.nickname);
       if (nicknameValidationResult) {
         this.nicknameError = nicknameValidationResult;
         isValid = false;
       }
 
-      // 2. Клиентская валидация пароля с использованием функции из validation_enter.js
       const passwordValidationResult = validateLoginPassword(this.password);
       if (passwordValidationResult) {
         this.passwordError = passwordValidationResult;
         isValid = false;
       }
 
-      // Если есть ошибки клиентской валидации, прерываем отправку на сервер
       if (!isValid) {
-        console.log('Форма содержит ошибки клиентской валидации. Отправка на сервер отменена.');
         return;
       }
 
-      // Если клиентская валидация успешна, отправляем запрос на бэкенд
       try {
-        const response = await fetch('http://192.168.100.4:3000/api/auth/login', { // URL вашего бэкенд API для входа
+        const response = await fetch('http://192.168.100.2:3000/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -90,11 +80,9 @@ export default {
 
         const data = await response.json();
 
-        if (response.ok) { // response.ok для статусов 2xx
-          console.log('Вход успешен:', data);
+        if (response.ok) {
           this.successMessage = data.message || 'Вход успешно выполнен!';
 
-          // Сохраняем токен и информацию о пользователе
           localStorage.setItem('chatToken', data.token);
           localStorage.setItem('chatUserId', data.userId);
           localStorage.setItem('chatNickname', data.nickname);
@@ -102,18 +90,14 @@ export default {
           this.nickname = '';
           this.password = '';
 
-          // Перенаправляем пользователя на страницу чата
           setTimeout(() => {
             this.$router.push('/chat');
           }, 1500);
 
         } else {
-          console.error('Ошибка входа:', data);
           this.generalError = data.message || 'Произошла ошибка при входе. Пожалуйста, попробуйте еще раз.';
-          // Ваш бэкенд возвращает 'Неверный никнейм или пароль.' для обоих случаев (пользователь не найден или пароль не совпадает)
         }
       } catch (error) {
-        console.error('Произошла ошибка сети или другое непредвиденное исключение:', error);
         this.generalError = 'Не удалось подключиться к серверу. Проверьте ваше интернет-соединение или запустите сервер.';
       }
     }
@@ -122,7 +106,6 @@ export default {
 </script>
 
 <style scoped>
-/* Ваши существующие стили */
 @import url('https://fonts.googleapis.com/css2?family=Abel&family=Roboto&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Abel&family=Roboto:wght@300;400;700&display=swap');
 
@@ -155,17 +138,10 @@ export default {
   border: 1px solid #818182;
   border-radius: 10px;
   padding: 10px 15px;
-  color: #818182;
+  color: #fff; 
   font-size: 1rem;
   width: 100%;
   box-sizing: border-box;
-}
-
-.full-width-link {
-  width: 100%;
-  display: block;
-  text-decoration: none;
-  color: inherit;
 }
 
 .btn {
@@ -182,34 +158,33 @@ export default {
   box-sizing: border-box;
 }
 
-/* НОВЫЕ СТИЛИ для сообщений об ошибках и успеха */
 .error-message {
-  color: #ff6b6b; /* Ярко-красный цвет для ошибок */
+  color: #ff6b6b;
   font-size: 0.8em;
-  margin-top: -10px; /* Поднимаем сообщение ближе к полю ввода */
-  min-height: 1.2em; /* Чтобы высота элемента не скакала, если нет ошибки */
+  margin-top: -10px;
+  min-height: 1.2em;
 }
 
 .general-error {
   text-align: center;
   color: #ff6b6b;
-  margin-top: 5px; /* Небольшой отступ от кнопки */
+  margin-top: 5px;
   font-weight: bold;
 }
 
 .success-message {
   text-align: center;
-  color: #6bff96; /* Зеленый цвет для успешных сообщений */
-  margin-top: 5px; /* Небольшой отступ от кнопки */
+  color: #6bff96;
+  margin-top: 5px;
   font-weight: bold;
 }
 
-.link { /* Добавляем стиль для ссылки "Don't have an account?" */
-  color: #FFFF; /* Цвет, соответствующий вашему текущему стилю input */
+.link {
+  color: #FFFF;
   text-align: center;
   text-decoration: none;
   font-size: 0.9rem;
-  margin-top: 5px; /* Небольшой отступ */
+  margin-top: 5px;
 }
 
 .link:hover {
