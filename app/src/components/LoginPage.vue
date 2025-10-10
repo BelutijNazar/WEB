@@ -1,11 +1,11 @@
 <template>
   <div class="login-wrapper">
     <div class="form-container">
-      <label class="label">Login</label>
+      <label class="label">Логин</label>
       <input type="text" class="input" v-model="nickname" @input="clearErrors('nickname')" />
       <div v-if="nicknameError" class="error-message">{{ nicknameError }}</div>
 
-      <label class="label">Password</label>
+      <label class="label">Пароль</label>
       <input type="password" class="input" v-model="password" @input="clearErrors('password')" />
       <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
 
@@ -13,10 +13,10 @@
       <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
 
       <router-link to="#" class="full-width-link">
-        <button class="btn" @click.prevent="login">Login</button>
+        <button class="btn" @click.prevent="login">Зайти</button>
       </router-link>
 
-      <router-link to="/" class="link">Don't have an account?</router-link>
+      <router-link to="/" class="link">Нет аккаунта?</router-link>
     </div>
   </div>
 </template>

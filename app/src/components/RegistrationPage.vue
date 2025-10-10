@@ -2,15 +2,15 @@
   <div class="reg-wrapper">
 
     <div class="form-container">
-      <label class="label">Login</label>
+      <label class="label">Логин</label>
       <input type="text" class="input" v-model="nickname" @input="clearErrors('nickname')" />
       <div v-if="nicknameError" class="error-message">{{ nicknameError }}</div>
 
-      <label class="label">Password</label>
+      <label class="label">Пароль</label>
       <input type="password" class="input" v-model="password" @input="clearErrors('password')" />
       <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
 
-      <label class="label">Password Check</label>
+      <label class="label">Повторить пароль</label>
       <input type="password" class="input" v-model="confirmPassword" @input="clearErrors('confirmPassword')" />
       <div v-if="confirmPasswordError" class="error-message">{{ confirmPasswordError }}</div>
 
@@ -18,9 +18,9 @@
       <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
 
 
-      <button class="btn" @click="register">Registration</button>
+      <button class="btn" @click="register">Регистрация</button>
 
-      <router-link to="/log" class="link">Already have an account?</router-link>
+      <router-link to="/log" class="link">Уже есть аккаунт?</router-link>
     </div>
   </div>
 </template>
