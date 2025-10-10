@@ -12,13 +12,10 @@
       <div v-if="generalError" class="error-message general-error">{{ generalError }}</div>
       <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
 
-<<<<<<< HEAD
       <router-link to="#" class="full-width-link">
         <button class="btn" @click.prevent="login">Зайти</button>
       </router-link>
-=======
-      <button class="btn" @click="login">Login</button>
->>>>>>> a9e104d85e0afff8c53a51631a58cbd9223a21cc
+      
 
       <router-link to="/" class="link">Нет аккаунта?</router-link>
     </div>

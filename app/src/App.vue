@@ -1,10 +1,7 @@
 <template>
-<<<<<<< HEAD
   <header class="app-header">
       <h1 class="title">Самое небезопасное место в интернете</h1>
     </header>
-=======
->>>>>>> a9e104d85e0afff8c53a51631a58cbd9223a21cc
     <router-view/>
 </template>
 

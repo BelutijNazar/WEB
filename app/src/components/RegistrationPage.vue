@@ -16,12 +16,9 @@
       <div v-if="generalError" class="error-message general-error">{{ generalError }}</div>
       <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
 
-<<<<<<< HEAD
 
       <button class="btn" @click="register">Регистрация</button>
-=======
-      <button class="btn" @click="register">Registration</button>
->>>>>>> a9e104d85e0afff8c53a51631a58cbd9223a21cc
+      
 
       <router-link to="/log" class="link">Уже есть аккаунт?</router-link>
     </div>
