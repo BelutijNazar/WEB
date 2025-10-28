@@ -22,13 +22,33 @@ jobs:
         run: echo "${{ secrets.VAULT_PASS }}" > vault_pass.txt
 
       - name: Run base playbook (system setup)
-        run: ansible-playbook -i inventory.ini playbooks/base.yml --vault-password-file vault_pass.txt
+        working-directory: infrastructure-automation
+        run: |
+          ansible-playbook -i inventory.ini playbooks/base.yml --vault-password-file vault_pass.txt
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_FORCE_COLOR: "True"
 
       - name: Run docker setup
-        run: ansible-playbook -i inventory.ini playbooks/docker.yml --vault-password-file vault_pass.txt
+        working-directory: infrastructure-automation
+        run: |
+          ansible-playbook -i inventory.ini playbooks/docker.yml --vault-password-file vault_pass.txt
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_FORCE_COLOR: "True"
 
       - name: Run database setup
-        run: ansible-playbook -i inventory.ini playbooks/db.yml --vault-password-file vault_pass.txt
+        working-directory: infrastructure-automation
+        run: |
+          ansible-playbook -i inventory.ini playbooks/db.yml --vault-password-file vault_pass.txt
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_FORCE_COLOR: "True"
 
       - name: Run CMS setup
-        run: ansible-playbook -i inventory.ini playbooks/cms.yml --vault-password-file vault_pass.txt
+        working-directory: infrastructure-automation
+        run: |
+          ansible-playbook -i inventory.ini playbooks/cms.yml --vault-password-file vault_pass.txt
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_FORCE_COLOR: "True"
