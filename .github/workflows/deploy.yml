@@ -24,7 +24,7 @@ jobs:
       - name: Run base playbook (system setup)
         working-directory: infrastructure-automation
         run: |
-          ansible-playbook -i inventory.ini playbooks/base.yml --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/base.yml --vault-password-file ../vault_pass.txt
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_FORCE_COLOR: "True"
@@ -32,7 +32,7 @@ jobs:
       - name: Run docker setup
         working-directory: infrastructure-automation
         run: |
-          ansible-playbook -i inventory.ini playbooks/docker.yml --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/docker.yml --vault-password-file ../vault_pass.txt
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_FORCE_COLOR: "True"
@@ -40,7 +40,7 @@ jobs:
       - name: Run database setup
         working-directory: infrastructure-automation
         run: |
-          ansible-playbook -i inventory.ini playbooks/db.yml --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/db.yml --vault-password-file ../vault_pass.txt
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_FORCE_COLOR: "True"
@@ -48,7 +48,10 @@ jobs:
       - name: Run CMS setup
         working-directory: infrastructure-automation
         run: |
-          ansible-playbook -i inventory.ini playbooks/cms.yml --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/cms.yml --vault-password-file ../vault_pass.txt
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_FORCE_COLOR: "True"
+
+      - name: Cleanup vault pass file
+        run: rm -f vault_pass.txt
