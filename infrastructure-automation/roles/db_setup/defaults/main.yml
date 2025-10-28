@@ -1,0 +1,16 @@
+---
+# defaults file for roles/db_setup
+db_image: "postgres:latest"
+db_container_name: "pgadmin.team5.lab"
+postgres_db: "nextcloud"
+db_user: "{{ vault_postgres_user }}"
+db_password: "{{ vault_postgres_password }}"
+db_name: "team_db"
+db_port: "5432"
+db_volume: "postgres_data"
+
+pgadmin_image: dpage/pgadmin4:latest
+pgadmin_email: "{{ vault_pgadmin_email }}"
+pgadmin_password: "{{ vault_pgadmin_password }}"
+pgadmin_port: 5050
+pgadmin_volume: "pgadmin_data"

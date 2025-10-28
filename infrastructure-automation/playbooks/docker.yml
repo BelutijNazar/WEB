@@ -1,0 +1,10 @@
+---
+- name: install docker and docker compoe
+  hosts: local
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../group_vars/all.yml
+
+  roles:
+    - docker_setup

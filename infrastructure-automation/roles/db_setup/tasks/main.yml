@@ -1,0 +1,60 @@
+---
+# tasks file for roles/db_setup
+- name: create network for cms and db
+  community.docker.docker_network:
+    name: nextcloud_net
+  tags: conf
+
+- name: download dependence for docker
+  apt:
+    name:
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present
+  tags: preinstall
+  become: true
+
+- name: create volume for PostgreSQL
+  community.docker.docker_volume:
+    name: pg_data
+  tags: volume
+
+- name: launch container PostgreSQL
+  community.docker.docker_container:
+    name: postgres
+    image: "{{ db_image }}"
+    restart_policy: always
+    env:
+      POSTGRES_DB: "{{ postgres_db }}"
+      POSTGRES_USER: "{{ db_user }}"
+      POSTGRES_PASSWORD: "{{ db_password }}"
+    volumes:
+      - "{{ db_volume }}:/var/lib/postgresql/data:rw"
+    networks:
+      - name: nextcloud_net
+    published_ports:
+      - "{{ db_port }}:5432"
+  tags: postgres
+  become: true
+
+- name: create volume for pgAdmin
+  community.docker.docker_volume:
+    name: pgadmin
+  tags: volume
+
+- name: launch pgAdmin container
+  community.docker.docker_container:
+    name: pgadmin
+    image: "{{ pgadmin_image }}"
+    env:
+      PGADMIN_DEFAULT_EMAIL:  "{{ pgadmin_email }}"
+      PGADMIN_DEFAULT_PASSWORD:  "{{ pgadmin_password }}"
+    published_ports:
+      - "{{ pgadmin_port }}:80"
+    volumes:
+      - "{{ pgadmin_volume }}:/var/lib/pgadmin:rw"
+    networks:
+      - name: nextcloud_net
+    restart_policy: unless-stopped
+  tags: pgadmin

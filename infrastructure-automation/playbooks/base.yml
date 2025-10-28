@@ -1,0 +1,56 @@
+---
+- name: test settings
+  hosts: local
+  become: true
+  vars_files:
+    - ../group_vars/all.yml
+
+  tasks:
+    - name: update apt cache
+      apt:
+        update_cache: yes
+
+    - name: install packages
+      apt:
+        name: "{{ base_packages }}"
+        state: present
+
+    - name: install hostname
+      hostname:
+        name: "{{ hostname }}"
+
+    - name: add hostname in /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "127.0.0.1 {{ hostname }}"
+        create: yes
+
+    - name: set timezone
+      timezone:
+        name: "{{ timezone }}"
+
+    - name: create team group
+      group:
+        name: "{{ team_group }}"
+        state: present
+
+    - name: add user team
+      user:
+        name: "{{ item }}"
+        groups: "{{ team_group }}"
+        shell: /bin/bash
+        create_home: yes
+        state: present
+      loop: "{{ team_users }}"
+
+    - name: set sudo for groups (NOPASSWD)
+      copy:
+        dest: "/etc/sudoers.d/{{ team_group }}"
+        content: "%{{ team_group }} ALL=(ALL) NOPASSWD: ALL"
+        mode: "0440"
+
+    - name: create direct for log
+      file:
+        path: "/var/log/sudo/{{ team_group }}"
+        state: directory
+        mode: "0755"

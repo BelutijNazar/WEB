@@ -1,0 +1,6 @@
+---
+- name: deploy db service
+  hosts: all
+  become: true
+  roles:
+    - db_setup

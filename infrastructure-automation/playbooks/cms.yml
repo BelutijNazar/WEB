@@ -1,0 +1,6 @@
+---
+- name: deploy CMS service
+  hosts: local
+  become: true
+  roles:
+    - cms_setup

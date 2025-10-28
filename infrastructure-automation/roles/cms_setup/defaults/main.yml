@@ -1,0 +1,14 @@
+---
+# defaults file for roles/cms_setup
+nextcloud_image: nextcloud:latest
+db_engine: postgres
+
+db_host: "postgres"
+db_name: "nextcloud"
+db_user: "{{ vault_postgres_user }}"
+db_password: "{{ vault_postgres_password }}"
+db_port: 5432
+
+nextcloud_port: 8081
+
+nextcloud_volume: nextcloud_data

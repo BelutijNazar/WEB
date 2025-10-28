@@ -1,0 +1,33 @@
+---
+hostname: "srv-demo1.team5.lab"
+
+base_packages:
+  - vim
+  - curl
+  - htop
+  - net-tools
+  - git
+
+timezone: "Europe/Minsk"
+
+team_group: "team5"
+
+team_users:
+  - belutij.nazar
+  - dolmatov.egor
+  - fomenkov.artyom
+
+db_image: postgres:latest
+db_container_name: postgres.team5.lab
+db_volume: pg_data:/var/lib/postgresql/data
+db_user: team5_user
+db_passwdord: strongpassword
+db_name: team5_db
+
+pgadmin_image: dpage/pgadmin4:latest
+pgadmin_container_name: pgadmin.team5.lab
+#pgadmin_email: admin@team5.lab
+#pgadmin_password: strongpassword
+pgadmin_volume: pgadmin_data:/var/lib/pgadmin
+
+

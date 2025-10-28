@@ -1,0 +1,48 @@
+---
+# tasks file for roles/docker_setup
+
+- name: install dependence for docker
+  apt:
+    name: "{{ docker_packages }}"
+    state: present
+    update_cache: yes
+  tags:
+    - preinstall
+
+- name: add gpg key docker
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+  tags:
+    - docker
+
+- name: add docker repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable "
+    filename: docker
+  tags:
+    - docker
+
+- name: install docker and docker compose
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+  tags:
+    - docker
+  notify: Restart Docker Service
+
+- name: add users in group docker
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  loop: "{{ docker_users }}"
+  tags:
+    - conf

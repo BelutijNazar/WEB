@@ -1,0 +1,22 @@
+---
+- name: create nextcloud volume
+  community.docker.docker_volume:
+    name: "{{ nextcloud_volume }}"
+
+- name: launch nextcloud container
+  community.docker.docker_container:
+    name: nextcloud
+    image: "{{ nextcloud_image }}"
+    restart_policy: unless-stopped
+    env:
+      POSTGRES_DB: "{{ db_name }}"
+      POSTGRES_USER: "{{ db_user }}"
+      POSTGRES_PASSWORD: "{{ db_password }}"
+      POSTGRES_HOST: "{{ db_host }}"
+    ports:
+      - "{{ nextcloud_port }}:80"
+    volumes:
+      - "{{ nextcloud_volume }}:/var/www/html"
+    networks:
+      - name: nextcloud_net
+  tags: cms
