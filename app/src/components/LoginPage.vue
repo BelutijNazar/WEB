@@ -103,9 +103,9 @@ export default {
           this.nickname = '';
           this.password = '';
 
-          // Перенаправляем пользователя на страницу чата
+          // Перенаправляем пользователя на страницу gj
           setTimeout(() => {
-            this.$router.push('/chat');
+            this.$router.push('/gj');
           }, 1500);
 
         } else {
