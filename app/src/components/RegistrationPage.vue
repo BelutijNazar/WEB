@@ -18,12 +18,7 @@
       <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
 
       <div class="recaptcha-wrapper">
-        <div 
-          class="g-recaptcha" 
-          data-sitekey="6LfTUfsrAAAAANG8Z4OTFXrcYbyWIEjHFf-nEjk8" 
-          data-callback="recaptchaCallback" 
-          data-expired-callback="recaptchaExpired"
-        ></div>
+        <div ref="recaptchaContainer"></div>
         <div v-if="recaptchaError" class="error-message">{{ recaptchaError }}</div>
       </div>
       <button class="btn" @click="register">Регистрация</button>
@@ -35,82 +30,110 @@
 </template>
 
 <script>
-// Импортируем функции валидации из вашего файла validation_register.js
-// Убедитесь, что путь к файлу верный относительно этого компонента.
-// Если ваш файл находится в WEB/C/validation_register.js, а этот файл в WEB/app/src/components,
-// то путь будет '../../../../C/validation_register'
 import { validatePassword, validateConfirmPassword } from '../../../C/validation_reg';
 
 export default {
   name: 'RegistrationPage',
-  // Добавляем данные для полей ввода и сообщений об ошибках
   data() {
     return {
+      // Данные полей ввода
       nickname: '',
       password: '',
       confirmPassword: '',
+      
+      // Сообщения об ошибках и успехе
       nicknameError: '',
       passwordError: '',
       confirmPasswordError: '',
-      generalError: '', 
-      successMessage: '', 
-      recaptchaToken: null,
+      generalError: '',
+      successMessage: '',
       recaptchaError: '',
+
+      // Данные для reCAPTCHA
+      recaptchaToken: null,
+      recaptchaWidgetId: null, // Будем хранить ID виджета для этого экземпляра компонента
     };
   },
-  //mounted() {
-    // Глобальное подключение колбэков reCAPTCHA к методам Vue
-    //window.recaptchaCallback = this.recaptchaCallback;
-    //window.recaptchaExpired = this.recaptchaExpired;
-  //},
+
   mounted() {
-    const checkInterval = setInterval(() => {
-      if (window.isRecaptchaApiLoaded) {
-        clearInterval(checkInterval);
-        this.renderRecaptcha();
-      }
-    }, 100);
+    // Этот хук жизненного цикла вызывается КАЖДЫЙ РАЗ, когда вы заходите на страницу регистрации.
+    // Идеальное место для инициализации reCAPTCHA.
+    this.loadRecaptchaScript();
   },
-  beforeUnmount() {
-    // Очистка глобальных функций при удалении компонента
-    delete window.recaptchaCallback;
-    delete window.recaptchaExpired;
-  },
+
   methods: {
-    // МЕТОДЫ-КОЛБЭКИ reCAPTCHA
-    recaptchaCallback(response) {
-      // Вызывается, когда пользователь успешно проходит проверку (response — это токен)
-      this.recaptchaToken = response;
-      this.recaptchaError = ''; // Очищаем ошибку при успешном прохождении
-    },
-    recaptchaExpired() {
-      // Вызывается, когда токен истекает (через ~2 минуты)
-      this.recaptchaToken = null;
-      this.recaptchaError = 'Время действия reCAPTCHA истекло. Пожалуйста, пройдите проверку еще раз.';
-      // Перезагружаем виджет, чтобы показать его снова (если это не происходит автоматически)
-      if (typeof grecaptcha !== 'undefined') {
-        grecaptcha.reset();
+    /**
+     * Управляет загрузкой внешнего скрипта Google reCAPTCHA.
+     * Если скрипт уже загружен (например, после возвращения с другой страницы),
+     * он просто вызывает отрисовку виджета.
+     */
+    loadRecaptchaScript() {
+      // Проверяем, существует ли уже объект grecaptcha в window.
+      if (window.grecaptcha && window.grecaptcha.render) {
+        // Если да, скрипт уже загружен. Просто рендерим виджет.
+        // Оборачиваем в $nextTick, чтобы гарантировать, что DOM компонента готов.
+        this.$nextTick(() => {
+          this.renderRecaptcha();
+        });
+        return;
       }
+      
+      // Если скрипт еще не загружен, создаем и добавляем его на страницу.
+      const script = document.createElement('script');
+      // render=explicit - говорит, что мы будем рендерить виджет вручную.
+      // onload=onRecaptchaLoadCallback - указывает, какую глобальную функцию вызвать, когда скрипт будет готов.
+      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoadCallback&render=explicit';
+      script.async = true;
+      script.defer = true;
+      
+      // Создаем глобальную функцию-колбэк. Она будет вызвана один раз при первой загрузке скрипта.
+      window.onRecaptchaLoadCallback = () => {
+        this.$nextTick(() => {
+          this.renderRecaptcha();
+        });
+      };
+      
+      document.head.appendChild(script);
     },
+
+    /**
+     * Отрисовывает виджет reCAPTCHA в DOM-элементе нашего компонента.
+     */
     renderRecaptcha() {
-      if (this.$refs.recaptcha) {
-        this.widgetId = window.grecaptcha.render(this.$refs.recaptcha, {
-          sitekey: '6LfhetErAAAAAL7yWxchYiW2K9mT-ficTyVirrjn',
-          callback: (token) => {
-            this.captchaVerified = true;
-            this.captchaResponse = token;
-          },
-          'expired-callback': () => {
-            this.captchaVerified = false;
-            this.captchaResponse = '';
-            if (this.widgetId !== null) {
-              window.grecaptcha.reset(this.widgetId);
-            }
-          },
+      // Проверяем, что контейнер (div с ref) существует и виджет для этого
+      // экземпляра компонента еще не был отрисован (recaptchaWidgetId === null).
+      if (this.$refs.recaptchaContainer && this.recaptchaWidgetId === null) {
+        this.recaptchaWidgetId = window.grecaptcha.render(this.$refs.recaptchaContainer, {
+          'sitekey': '6LfTUfsrAAAAANG8Z4OTFXrcYbyWIEjHFf-nEjk8', // ВАШ КЛЮЧ САЙТА
+          // Привязываем методы компонента напрямую к колбэкам виджета
+          'callback': this.onRecaptchaVerified,
+          'expired-callback': this.onRecaptchaExpired,
         });
       }
     },
-    // Метод для очистки конкретной ошибки или всех ошибок
+
+    /**
+     * Вызывается, когда пользователь успешно проходит проверку.
+     * @param {string} response - Токен от Google.
+     */
+    onRecaptchaVerified(response) {
+      this.recaptchaToken = response;
+      this.recaptchaError = '';
+    },
+
+    /**
+     * Вызывается, когда срок действия токена истекает.
+     */
+    onRecaptchaExpired() {
+      this.recaptchaToken = null;
+      this.recaptchaError = 'Время действия reCAPTCHA истекло. Пожалуйста, пройдите проверку еще раз.';
+      // Сбрасываем виджет, чтобы пользователь мог пройти проверку снова.
+      if (this.recaptchaWidgetId !== null && typeof window.grecaptcha !== 'undefined') {
+        window.grecaptcha.reset(this.recaptchaWidgetId);
+      }
+    },
+
+    // Метод для очистки ошибок
     clearErrors(field = null) {
       if (field === 'nickname') this.nicknameError = '';
       else if (field === 'password') this.passwordError = '';
@@ -119,100 +142,75 @@ export default {
         this.nicknameError = '';
         this.passwordError = '';
         this.confirmPasswordError = '';
-        this.generalError = ''; 
-        this.successMessage = ''; 
+        this.generalError = '';
+        this.successMessage = '';
       }
     },
 
-    
-    // Метод для обработки регистрации
+    // Метод регистрации
     async register() {
-      this.clearErrors(); 
+      this.clearErrors();
       let isValid = true;
-      // 1. Валидация никнейма 
+
+      // 1. Валидация полей
       if (!this.nickname.trim()) {
         this.nicknameError = 'Логин не может быть пустым.';
         isValid = false;
       }
-
-      // 2. Валидация Пароля с использованием функции из validation_register.js
       const passwordValidationResult = validatePassword(this.password);
       if (passwordValidationResult) {
         this.passwordError = passwordValidationResult;
         isValid = false;
       }
-
-      // 3. Валидация Подтверждения Пароля с использованием функции из validation_register.js
       const confirmPasswordValidationResult = validateConfirmPassword(this.password, this.confirmPassword);
       if (confirmPasswordValidationResult) {
         this.confirmPasswordError = confirmPasswordValidationResult;
         isValid = false;
       }
 
-      // 4. ПРОВЕРКА reCAPTCHA
+      // 2. Проверка reCAPTCHA
       if (!this.recaptchaToken) {
         this.recaptchaError = 'Пожалуйста, подтвердите, что вы не робот.';
         isValid = false;
       }
 
-      // Если есть ошибки клиентской валидации, прерываем выполнение
-      if (!isValid) {
-        console.log('Форма содержит ошибки клиентской валидации. Отправка на сервер отменена.');
-        return; 
-      }
+      if (!isValid) return;
 
-      // Если клиентская валидация прошла успешно, отправляем запрос на бэкенд
+      // 3. Отправка на сервер
       try {
-        const response = await fetch('http://localhost:3000/api/auth/register', { 
+        const response = await fetch('http://localhost:3000/api/auth/register', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            nickname: this.nickname, 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nickname: this.nickname,
             password: this.password,
-            // ОТПРАВКА ТОКЕНА reCAPTCHA НА СЕРВЕР!
-            'g-recaptcha-response': this.recaptchaToken
-           })
+            'g-recaptcha-response': this.recaptchaToken,
+          }),
         });
-
-        const data = await response.json(); // Парсим JSON-ответ от сервера
-
-        if (response.ok) { 
-          // Регистрация успешна
-          console.log('Регистрация успешна:', data);
+        const data = await response.json();
+        if (response.ok) {
           this.successMessage = data.message || 'Регистрация успешно выполнена!';
-
-          // Очищаем поля формы
           this.nickname = '';
           this.password = '';
           this.confirmPassword = '';
-
-          // Опционально: перенаправляем пользователя на страницу входа через 2 секунды
           setTimeout(() => {
             this.$router.push('/log');
           }, 2000);
-
         } else {
-          // Сервер вернул ошибку (например, 400 Bad Request, 409 Conflict, 500 Internal Server Error)
-          console.error('Ошибка регистрации:', data);
-          // Показываем общую ошибку от сервера
-          this.generalError = data.message || 'Произошла ошибка при регистрации. Пожалуйста, попробуйте еще раз.';
+          this.generalError = data.message || 'Произошла ошибка при регистрации.';
         }
       } catch (error) {
-        // Обработка ошибок сети (например, сервер не запущен или нет интернета)
-        console.error('Произошла ошибка сети или другое непредвиденное исключение:', error);
-        this.generalError = 'Не удалось подключиться к серверу. Проверьте ваше интернет-соединение или запустите сервер.';
+        this.generalError = 'Не удалось подключиться к серверу.';
       } finally {
-        // Всегда сбрасываем reCAPTCHA после попытки отправки, чтобы токен не использовался повторно
-        if (typeof grecaptcha !== 'undefined') {
-          grecaptcha.reset();
+        // Всегда сбрасываем reCAPTCHA после попытки отправки, используя ID виджета.
+        if (this.recaptchaWidgetId !== null && typeof window.grecaptcha !== 'undefined') {
+          window.grecaptcha.reset(this.recaptchaWidgetId);
           this.recaptchaToken = null;
         }
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>

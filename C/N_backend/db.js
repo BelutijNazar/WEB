@@ -36,11 +36,11 @@ const pool = new Pool({
 });
 
 // Добавим обработчики событий для пула для лучшей диагностики (опционально, но полезно)
-pool.on('connect', (client) => {
+//pool.on('connect', (client) => {
     // Можно получить IP клиента, если это полезно для логов
     // const clientAddress = client.connectionParameters.host + ':' + client.connectionParameters.port;
-    console.log('[DB] Клиент успешно подключился к PostgreSQL.');
-});
+//    console.log('[DB] Клиент успешно подключился к PostgreSQL.');
+//});
 
 pool.on('error', (err, client) => {
     console.error('[DB] Неожиданная ошибка на неактивном клиенте (idle client):', err);
