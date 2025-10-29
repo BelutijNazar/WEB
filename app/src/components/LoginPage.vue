@@ -105,7 +105,7 @@ export default {
 
           // Перенаправляем пользователя на страницу чата
           setTimeout(() => {
-            this.$router.push('/chat');
+            this.$router.push('/gj');
           }, 1500);
 
         } else {

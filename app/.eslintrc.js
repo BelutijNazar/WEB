@@ -13,5 +13,11 @@ module.exports = {
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off'
+  },
+  globals: {
+    // Объявляем 'grecaptcha' как глобальную переменную,
+    // доступную только для чтения ('readonly') или для записи ('writable').
+    // В случае reCAPTCHA достаточно 'readonly'.
+    grecaptcha: 'readonly' 
   }
 }

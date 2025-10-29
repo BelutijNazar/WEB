@@ -17,7 +17,15 @@
       <div v-if="generalError" class="error-message general-error">{{ generalError }}</div>
       <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
 
-
+      <div class="recaptcha-wrapper">
+        <div 
+          class="g-recaptcha" 
+          data-sitekey="6LfTUfsrAAAAANG8Z4OTFXrcYbyWIEjHFf-nEjk8" 
+          data-callback="recaptchaCallback" 
+          data-expired-callback="recaptchaExpired"
+        ></div>
+        <div v-if="recaptchaError" class="error-message">{{ recaptchaError }}</div>
+      </div>
       <button class="btn" @click="register">Регистрация</button>
       
 
@@ -44,11 +52,64 @@ export default {
       nicknameError: '',
       passwordError: '',
       confirmPasswordError: '',
-      generalError: '', // Для ошибок от сервера или сети
-      successMessage: '' // Для сообщения об успешной регистрации
+      generalError: '', 
+      successMessage: '', 
+      recaptchaToken: null,
+      recaptchaError: '',
     };
   },
+  //mounted() {
+    // Глобальное подключение колбэков reCAPTCHA к методам Vue
+    //window.recaptchaCallback = this.recaptchaCallback;
+    //window.recaptchaExpired = this.recaptchaExpired;
+  //},
+  mounted() {
+    const checkInterval = setInterval(() => {
+      if (window.isRecaptchaApiLoaded) {
+        clearInterval(checkInterval);
+        this.renderRecaptcha();
+      }
+    }, 100);
+  },
+  beforeUnmount() {
+    // Очистка глобальных функций при удалении компонента
+    delete window.recaptchaCallback;
+    delete window.recaptchaExpired;
+  },
   methods: {
+    // МЕТОДЫ-КОЛБЭКИ reCAPTCHA
+    recaptchaCallback(response) {
+      // Вызывается, когда пользователь успешно проходит проверку (response — это токен)
+      this.recaptchaToken = response;
+      this.recaptchaError = ''; // Очищаем ошибку при успешном прохождении
+    },
+    recaptchaExpired() {
+      // Вызывается, когда токен истекает (через ~2 минуты)
+      this.recaptchaToken = null;
+      this.recaptchaError = 'Время действия reCAPTCHA истекло. Пожалуйста, пройдите проверку еще раз.';
+      // Перезагружаем виджет, чтобы показать его снова (если это не происходит автоматически)
+      if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+      }
+    },
+    renderRecaptcha() {
+      if (this.$refs.recaptcha) {
+        this.widgetId = window.grecaptcha.render(this.$refs.recaptcha, {
+          sitekey: '6LfhetErAAAAAL7yWxchYiW2K9mT-ficTyVirrjn',
+          callback: (token) => {
+            this.captchaVerified = true;
+            this.captchaResponse = token;
+          },
+          'expired-callback': () => {
+            this.captchaVerified = false;
+            this.captchaResponse = '';
+            if (this.widgetId !== null) {
+              window.grecaptcha.reset(this.widgetId);
+            }
+          },
+        });
+      }
+    },
     // Метод для очистки конкретной ошибки или всех ошибок
     clearErrors(field = null) {
       if (field === 'nickname') this.nicknameError = '';
@@ -58,18 +119,17 @@ export default {
         this.nicknameError = '';
         this.passwordError = '';
         this.confirmPasswordError = '';
-        this.generalError = ''; // Сбрасываем общую ошибку
-        this.successMessage = ''; // Сбрасываем сообщение об успехе
+        this.generalError = ''; 
+        this.successMessage = ''; 
       }
     },
 
+    
     // Метод для обработки регистрации
     async register() {
-      this.clearErrors(); // Очищаем все предыдущие ошибки перед новой попыткой
-
+      this.clearErrors(); 
       let isValid = true;
-
-      // 1. Валидация никнейма (просто проверяем, что не пустой)
+      // 1. Валидация никнейма 
       if (!this.nickname.trim()) {
         this.nicknameError = 'Логин не может быть пустым.';
         isValid = false;
@@ -89,25 +149,36 @@ export default {
         isValid = false;
       }
 
+      // 4. ПРОВЕРКА reCAPTCHA
+      if (!this.recaptchaToken) {
+        this.recaptchaError = 'Пожалуйста, подтвердите, что вы не робот.';
+        isValid = false;
+      }
+
       // Если есть ошибки клиентской валидации, прерываем выполнение
       if (!isValid) {
         console.log('Форма содержит ошибки клиентской валидации. Отправка на сервер отменена.');
-        return; // Останавливаем выполнение, если есть ошибки на клиенте
+        return; 
       }
 
       // Если клиентская валидация прошла успешно, отправляем запрос на бэкенд
       try {
-        const response = await fetch('http://localhost:3000/api/auth/register', { // URL вашего бэкенд API
+        const response = await fetch('http://localhost:3000/api/auth/register', { 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ nickname: this.nickname, password: this.password })
+          body: JSON.stringify({ 
+            nickname: this.nickname, 
+            password: this.password,
+            // ОТПРАВКА ТОКЕНА reCAPTCHA НА СЕРВЕР!
+            'g-recaptcha-response': this.recaptchaToken
+           })
         });
 
         const data = await response.json(); // Парсим JSON-ответ от сервера
 
-        if (response.ok) { // response.ok для статусов 2xx
+        if (response.ok) { 
           // Регистрация успешна
           console.log('Регистрация успешна:', data);
           this.successMessage = data.message || 'Регистрация успешно выполнена!';
@@ -132,6 +203,12 @@ export default {
         // Обработка ошибок сети (например, сервер не запущен или нет интернета)
         console.error('Произошла ошибка сети или другое непредвиденное исключение:', error);
         this.generalError = 'Не удалось подключиться к серверу. Проверьте ваше интернет-соединение или запустите сервер.';
+      } finally {
+        // Всегда сбрасываем reCAPTCHA после попытки отправки, чтобы токен не использовался повторно
+        if (typeof grecaptcha !== 'undefined') {
+          grecaptcha.reset();
+          this.recaptchaToken = null;
+        }
       }
     }
   }
@@ -150,7 +227,7 @@ export default {
   align-items: center;
   font-family: 'Abel', sans-serif;
   padding: 20px;
-  color: #eee; /* Цвет текста по умолчанию */
+  color: #eee; 
 }
 
 .form-container {
@@ -163,26 +240,26 @@ export default {
 }
 
 .label {
-  color: #eee; /* Более светлый цвет для меток */
+  color: #eee; 
   font-size: 1rem;
   text-align: left;
-  margin-bottom: -10px; /* Чтобы уменьшить расстояние между label и input */
+  margin-bottom: -10px; 
 }
 
 .input {
-  border: 1px solid #666; /* Более мягкая обводка */
+  border: 1px solid #666; 
   border-radius: 10px;
   padding: 12px 15px;
-  color: #fff; /* Белый текст в инпутах */
+  color: #fff; 
   font-size: 1rem;
 }
 
 .input::placeholder {
-  color: #aaa; /* Цвет плейсхолдера */
+  color: #aaa; 
 }
 
 .btn {
-  background-color: #556B8D; /* Немного измененный цвет кнопки */
+  background-color: #556B8D; 
   color: #FFFF;
   border: none;
   border-radius: 10px;
@@ -193,17 +270,17 @@ export default {
   transition: background-color 0.2s ease;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 10px; /* Отступ сверху для кнопки */
+  margin-top: 10px; 
 }
 
 .btn:hover {
-  background-color: #42566C; /* Более темный цвет при наведении */
+  background-color: #42566C; 
 }
 
 .link {
-  color: #FFF; /* Измененный цвет ссылки для лучшей читаемости на темном фоне */
+  color: #FFF; 
   text-align: center;
-  text-decoration: none; /* Убираем подчеркивание */
+  text-decoration: none; 
   font-size: 0.9rem;
 }
 
@@ -211,12 +288,11 @@ export default {
   text-decoration: underline;
 }
 
-/* НОВЫЕ СТИЛИ для сообщений об ошибках */
 .error-message {
-  color: #ff6b6b; /* Ярко-красный цвет для ошибок */
+  color: #ff6b6b; 
   font-size: 0.8em;
-  margin-top: -10px; /* Поднимаем сообщение ближе к полю ввода */
-  min-height: 1.2em; /* Чтобы высота элемента не скакала, если нет ошибки */
+  margin-top: -10px; 
+  min-height: 1.2em; 
 }
 
 .general-error {
@@ -228,7 +304,7 @@ export default {
 
 .success-message {
   text-align: center;
-  color: #6bff96; /* Зеленый цвет для успешных сообщений */
+  color: #6bff96; 
   margin-top: 10px;
   font-weight: bold;
 }
