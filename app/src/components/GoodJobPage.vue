@@ -37,7 +37,7 @@ async function verifyToken() {
   }
 
   try {
-    const res = await fetch('http://localhost:3000/api/auth/verify', {
+    const res = await fetch('https://localhost:8443/api/auth/verify', {
       headers: { Authorization: `Bearer ${token}` }
     })
 
