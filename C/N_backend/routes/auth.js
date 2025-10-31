@@ -126,7 +126,7 @@ router.post('/login', async (req, res) => {
         // ------------------------------------------------------------------
         //          --- ЗАЩИЩЕННАЯ ВЕРСИЯ (С ПАРАМЕТРИЗАЦИЕЙ) ---
         // ------------------------------------------------------------------
-        const queryText = 'SELECT * FROM users WHERE nickname = $1';
+        const queryText = 'SELECT *, role FROM users WHERE nickname = $1';
         const values = [nickname];
         userResult = await db.query(queryText, values);
         
@@ -172,7 +172,7 @@ router.post('/login', async (req, res) => {
 
         // ЕСЛИ ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ
         const token = jwt.sign(
-            { id: user.user_id, nickname: user.nickname },
+            { id: user.user_id, nickname: user.nickname, role: user.role, },
             process.env.JWT_SECRET,
             { expiresIn: '15s' }
         );

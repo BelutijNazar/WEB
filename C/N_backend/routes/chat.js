@@ -24,6 +24,18 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+// Middleware для проверки роли
+const checkRole = (requiredRole) => {
+    return (req, res, next) => {
+        // Предполагается, что authenticateToken уже отработал
+        // и добавил данные пользователя (включая роль) в req.user
+        if (!req.user || req.user.role !== requiredRole) {
+            console.warn(`[AUTH-FORBIDDEN] Пользователь '${req.user.nickname}' (роль: ${req.user.role}) попытался получить доступ к ресурсу для роли '${requiredRole}'.`);
+            return res.status(403).json({ message: 'Доступ запрещен.' });
+        }
+        next(); // Роль совпадает, разрешаем доступ
+    };
+};
 // =======================================================
 // GET /api/chat/messages?otherUserId=<id_другого_пользователя>
 // Получить все сообщения для чата между текущим пользователем и другим пользователем
