@@ -96,9 +96,10 @@ export default {
           this.successMessage = data.message || 'Вход успешно выполнен!';
 
           // Сохраняем токен и информацию о пользователе
-          localStorage.setItem('chatToken', data.token);
-          localStorage.setItem('chatUserId', data.userId);
-          localStorage.setItem('chatNickname', data.nickname);
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('userId', data.userId);
+          localStorage.setItem('nickname', data.nickname);
+
 
           this.nickname = '';
           this.password = '';

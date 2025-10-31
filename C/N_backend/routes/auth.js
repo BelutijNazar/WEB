@@ -13,7 +13,6 @@ const app = express();
 // Этот middleware ОБЯЗАТЕЛЕН для парсинга тела POST-запроса
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true })); // Для данных reCAPTCHA также может понадобиться
-
 // 2. ИСПОЛЬЗУЙТЕ ПЕРЕМЕННУЮ ОКРУЖЕНИЯ ДЛЯ СЕКРЕТНОГО КЛЮЧА
 // Убедитесь, что вы установили RECAPTCHA_SECRET_KEY в вашем .env файле
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
@@ -175,7 +174,7 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { id: user.user_id, nickname: user.nickname },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '15s' }
         );
 
         // ВЫВОДИМ СООБЩЕНИЕ ОБ УСПЕШНОМ ВХОДЕ В КОНСОЛЬ БЭКЕНДА
@@ -192,6 +191,40 @@ router.post('/login', async (req, res) => {
         console.error('Ошибка входа на сервере:', error);
         res.status(500).json({ message: 'Произошла внутренняя ошибка сервера при входе.' });
     }
+});
+
+// =======================================================
+// ✅ GET /api/auth/verify
+// Проверка валидности токена (для GoodJobPage)
+// =======================================================
+router.get('/verify', (req, res) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader) {
+    console.log('[AUTH-VERIFY] FAILED: Нет заголовка авторизации');
+    return res.status(401).json({ valid: false, message: 'Нет токена' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  if (!token) {
+    console.log('[AUTH-VERIFY] FAILED: Нет токена в заголовке');
+    return res.status(401).json({ valid: false, message: 'Неверный формат заголовка' });
+  }
+
+  // Проверяем токен
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    // Если токен истек (TokenExpiredError) или просто невалиден
+    if (err) {
+      console.warn(`[AUTH-VERIFY] FAILED: Токен недействителен или истек. Ошибка: ${err.message}`);
+      return res.status(403).json({ valid: false, message: 'Недействительный или истекший токен' });
+    }
+    
+    // Токен валиден
+    console.log(`[AUTH-VERIFY] SUCCESS: Токен подтвержден для пользователя ${decoded.nickname}`);
+    // Отправляем обратно данные пользователя из токена
+    res.json({ valid: true, user: decoded });
+  });
 });
 
 module.exports = router;

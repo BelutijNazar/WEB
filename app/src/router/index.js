@@ -25,6 +25,7 @@ const routes = [
     path: '/gj',
     name: 'GoodJobPage',
     component: GoodJobPage,
+    meta: { requiresAuth: true },
   },
 ];
 
@@ -32,5 +33,15 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  if (to.meta.requiresAuth && !token) {
+    console.warn('Попытка попасть на защищённую страницу без токена.')
+    next('/log')
+  } else {
+    next()
+  }
+})
 
 export default router;
