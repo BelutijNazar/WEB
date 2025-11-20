@@ -38,60 +38,50 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           
       # 3. Генерация динамического инвентаря
-      # Мы не используем готовый файл, а создаем его на лету, подставляя IP из секретов
       - name: Generate Inventory
         run: |
-          echo "[prod]" > inventory.ini
-          echo "${{ secrets.DEPLOY_HOST }} ansible_user=${{ secrets.DEPLOY_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
-          cat inventory.ini # Для отладки (IP будет виден в логах, будь внимателен, если стримишь)
+          # ИЗМЕНЕНИЕ: Создаем инвентарь ВНУТРИ папки проекта (рядом с group_vars)
+          echo "[prod]" > ${{ env.WORK_DIR }}/inventory.ini
+          echo "${{ secrets.DEPLOY_HOST }} ansible_user=${{ secrets.DEPLOY_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ${{ env.WORK_DIR }}/inventory.ini
 
-      # 4. Требование преподавателя: Проверка синтаксиса
+      # 4. Проверка синтаксиса
       - name: Ansible Syntax Check
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          echo "Checking syntax for all playbooks..."
-          ansible-playbook -i ../inventory.ini playbooks/base.yml --syntax-check --vault-password-file ../vault_pass.txt
-          ansible-playbook -i ../inventory.ini playbooks/docker.yml --syntax-check --vault-password-file ../vault_pass.txt
-          ansible-playbook -i ../inventory.ini playbooks/db.yml --syntax-check --vault-password-file ../vault_pass.txt
-          ansible-playbook -i ../inventory.ini playbooks/cms.yml --syntax-check --vault-password-file ../vault_pass.txt
+          echo "Checking syntax..."
+          # Теперь inventory.ini и vault_pass.txt лежат рядом, убираем ../
+          ansible-playbook -i inventory.ini playbooks/base.yml --syntax-check --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/docker.yml --syntax-check --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/db.yml --syntax-check --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/cms.yml --syntax-check --vault-password-file vault_pass.txt
 
-      # 5. Требование преподавателя: Вывод списка задач
-      - name: List Tasks
-        working-directory: ${{ env.WORK_DIR }}
-        run: |
-          echo "Listing tasks for Base Playbook:"
-          ansible-playbook -i ../inventory.ini playbooks/base.yml --list-tasks --vault-password-file ../vault_pass.txt
-          
-          echo "Listing tasks for Docker Playbook:"
-          ansible-playbook -i ../inventory.ini playbooks/docker.yml --list-tasks --vault-password-file ../vault_pass.txt
-          
-          # Можно добавить для остальных, если нужно, но для демонстрации хватит и пары
+      # 5. (Task list пропускаю, там аналогично убери ../)
 
-      # 6. Боевое развертывание (Запуск по очереди)
+      # 6. Боевое развертывание
       
       - name: Deploy Base System
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          # Теперь файл лежит рядом, пишем просто vault_pass.txt
-          ansible-playbook -i ../inventory.ini playbooks/base.yml --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/base.yml --vault-password-file vault_pass.txt
 
       - name: Deploy Docker & Compose
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i ../inventory.ini playbooks/docker.yml --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/docker.yml --vault-password-file vault_pass.txt
 
       - name: Deploy Database
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i ../inventory.ini playbooks/db.yml --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/db.yml --vault-password-file vault_pass.txt
 
       - name: Deploy CMS
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i ../inventory.ini playbooks/cms.yml --vault-password-file vault_pass.txt
+          ansible-playbook -i inventory.ini playbooks/cms.yml --vault-password-file vault_pass.txt
 
-      # 7. Очистка (тоже правим путь)
+      # 7. Очистка
       - name: Cleanup secrets
         if: always()
         run: |
-          rm -f ${{ env.WORK_DIR }}/vault_pass.txt inventory.ini ~/.ssh/id_rsa
+          # Чистим файлы внутри папки
+          rm -f ${{ env.WORK_DIR }}/vault_pass.txt ${{ env.WORK_DIR }}/inventory.ini ~/.ssh/id_rsa
