@@ -1,2 +1,6 @@
 ---
-# handlers file for roles/docker_setup
+- name: Restart Docker Service
+  service:
+    name: docker
+    state: restarted
+    enabled: yes
