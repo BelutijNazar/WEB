@@ -34,7 +34,7 @@ jobs:
           
           # Создаем приватный ключ для SSH
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
       # 3. Генерация динамического инвентаря
@@ -42,7 +42,7 @@ jobs:
       - name: Generate Inventory
         run: |
           echo "[prod]" > inventory.ini
-          echo "${{ secrets.DEPLOY_HOST }} ansible_user=${{ secrets.DEPLOY_USER }} ansible_ssh_private_key_file=~/.ssh/id_ed25519" >> inventory.ini
+          echo "${{ secrets.DEPLOY_HOST }} ansible_user=${{ secrets.DEPLOY_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
           cat inventory.ini # Для отладки (IP будет виден в логах, будь внимателен, если стримишь)
 
       # 4. Требование преподавателя: Проверка синтаксиса
@@ -94,4 +94,4 @@ jobs:
       - name: Cleanup secrets
         if: always()
         run: |
-          rm -f ${{ env.WORK_DIR }}/vault_pass.txt inventory.ini ~/.ssh/id_ed25519
+          rm -f ${{ env.WORK_DIR }}/vault_pass.txt inventory.ini ~/.ssh/id_rsa
