@@ -1,57 +1,96 @@
-name: Deploy Infrastructure with Ansible
+name: Deploy Infrastructure to Production
 
 on:
   push:
-    branches: [ "ansible" ]
+    branches: [ "ansible", "main" ]
   workflow_dispatch:
 
 jobs:
   deploy:
-    name: Run ansible deployment
+    name: Deploy to Combat Server
     runs-on: self-hosted
+    env:
+      ANSIBLE_HOST_KEY_CHECKING: "False"
+      ANSIBLE_FORCE_COLOR: "True"
+      # Указываем путь к папке с плейбуками, если она в корне репозитория - оставь точку
+      WORK_DIR: infrastructure-automation 
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 1. Подготовка окружения на Github Runner (Debian)
       - name: Install dependencies
         run: |
-          sudo apt update -y
-          sudo apt install -y ansible sshpass
+          sudo apt-get update -y
+          # Устанавливаем ansible, sshpass и git (если нет)
+          sudo apt-get install -y ansible sshpass git python3-pip
 
-      - name: Create vault password file
-        run: echo "${{ secrets.VAULT_PASS }}" > vault_pass.txt
-
-      - name: Run base playbook (system setup)
-        working-directory: infrastructure-automation
+      # 2. Создание файлов с секретами (SSH ключ и Vault пароль)
+      - name: Setup Secrets and SSH
         run: |
-          ansible-playbook -i inventory.ini playbooks/base.yml --vault-password-file ../vault_pass.txt
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-          ANSIBLE_FORCE_COLOR: "True"
-
-      - name: Run docker setup
-        working-directory: infrastructure-automation
+          # Создаем файл пароля Vault
+          echo "${{ secrets.VAULT_PASS }}" > vault_pass.txt
+          
+          # Создаем приватный ключ для SSH подключения
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+      # 3. Генерация динамического инвентаря
+      # Мы не используем готовый файл, а создаем его на лету, подставляя IP из секретов
+      - name: Generate Inventory
         run: |
-          ansible-playbook -i inventory.ini playbooks/docker.yml --vault-password-file ../vault_pass.txt
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-          ANSIBLE_FORCE_COLOR: "True"
+          echo "[prod]" > inventory.ini
+          echo "${{ secrets.DEPLOY_HOST }} ansible_user=${{ secrets.DEPLOY_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
+          cat inventory.ini # Для отладки (IP будет виден в логах, будь внимателен, если стримишь)
 
-      - name: Run database setup
-        working-directory: infrastructure-automation
+      # 4. Требование преподавателя: Проверка синтаксиса
+      - name: Ansible Syntax Check
+        working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i inventory.ini playbooks/db.yml --vault-password-file ../vault_pass.txt
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-          ANSIBLE_FORCE_COLOR: "True"
+          echo "Checking syntax for all playbooks..."
+          ansible-playbook -i ../inventory.ini playbooks/base.yml --syntax-check --vault-password-file ../vault_pass.txt
+          ansible-playbook -i ../inventory.ini playbooks/docker.yml --syntax-check --vault-password-file ../vault_pass.txt
+          ansible-playbook -i ../inventory.ini playbooks/db.yml --syntax-check --vault-password-file ../vault_pass.txt
+          ansible-playbook -i ../inventory.ini playbooks/cms.yml --syntax-check --vault-password-file ../vault_pass.txt
 
-      - name: Run CMS setup
-        working-directory: infrastructure-automation
+      # 5. Требование преподавателя: Вывод списка задач
+      - name: List Tasks
+        working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i inventory.ini playbooks/cms.yml --vault-password-file ../vault_pass.txt
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-          ANSIBLE_FORCE_COLOR: "True"
+          echo "Listing tasks for Base Playbook:"
+          ansible-playbook -i ../inventory.ini playbooks/base.yml --list-tasks --vault-password-file ../vault_pass.txt
+          
+          echo "Listing tasks for Docker Playbook:"
+          ansible-playbook -i ../inventory.ini playbooks/docker.yml --list-tasks --vault-password-file ../vault_pass.txt
+          
+          # Можно добавить для остальных, если нужно, но для демонстрации хватит и пары
 
-      - name: Cleanup vault pass file
-        run: rm -f vault_pass.txt
+      # 6. Боевое развертывание (Запуск по очереди)
+      
+      - name: Deploy Base System
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          ansible-playbook -i ../inventory.ini playbooks/base.yml --vault-password-file ../vault_pass.txt
+
+      - name: Deploy Docker & Compose
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          ansible-playbook -i ../inventory.ini playbooks/docker.yml --vault-password-file ../vault_pass.txt
+
+      - name: Deploy Database
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          ansible-playbook -i ../inventory.ini playbooks/db.yml --vault-password-file ../vault_pass.txt
+
+      - name: Deploy CMS
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          ansible-playbook -i ../inventory.ini playbooks/cms.yml --vault-password-file ../vault_pass.txt
+
+      # 7. Очистка
+      - name: Cleanup secrets
+        if: always() # Выполнить даже если предыдущие шаги упали
+        run: |
+          rm -f vault_pass.txt inventory.ini ~/.ssh/id_rsa
