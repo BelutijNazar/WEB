@@ -29,12 +29,12 @@ jobs:
       # 2. Создание файлов с секретами (SSH ключ и Vault пароль)
       - name: Setup Secrets and SSH
         run: |
-          # Создаем файл пароля Vault
-          echo "${{ secrets.VAULT_PASS }}" > vault_pass.txt
+          # ВАЖНО: Создаем файл пароля СРАЗУ ВНУТРИ рабочей папки
+          echo "${{ secrets.VAULT_PASS }}" > ${{ env.WORK_DIR }}/vault_pass.txt
           
-          # Создаем приватный ключ для SSH подключения
+          # Создаем приватный ключ для SSH
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_rsa
           
       # 3. Генерация динамического инвентаря
@@ -42,7 +42,7 @@ jobs:
       - name: Generate Inventory
         run: |
           echo "[prod]" > inventory.ini
-          echo "${{ secrets.DEPLOY_HOST }} ansible_user=${{ secrets.DEPLOY_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
+          echo "${{ secrets.DEPLOY_HOST }} ansible_user=${{ secrets.DEPLOY_USER }} ansible_ssh_private_key_file=~/.ssh/id_ed25519" >> inventory.ini
           cat inventory.ini # Для отладки (IP будет виден в логах, будь внимателен, если стримишь)
 
       # 4. Требование преподавателя: Проверка синтаксиса
@@ -72,25 +72,26 @@ jobs:
       - name: Deploy Base System
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i ../inventory.ini playbooks/base.yml --vault-password-file ../vault_pass.txt
+          # Теперь файл лежит рядом, пишем просто vault_pass.txt
+          ansible-playbook -i ../inventory.ini playbooks/base.yml --vault-password-file vault_pass.txt
 
       - name: Deploy Docker & Compose
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i ../inventory.ini playbooks/docker.yml --vault-password-file ../vault_pass.txt
+          ansible-playbook -i ../inventory.ini playbooks/docker.yml --vault-password-file vault_pass.txt
 
       - name: Deploy Database
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i ../inventory.ini playbooks/db.yml --vault-password-file ../vault_pass.txt
+          ansible-playbook -i ../inventory.ini playbooks/db.yml --vault-password-file vault_pass.txt
 
       - name: Deploy CMS
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          ansible-playbook -i ../inventory.ini playbooks/cms.yml --vault-password-file ../vault_pass.txt
+          ansible-playbook -i ../inventory.ini playbooks/cms.yml --vault-password-file vault_pass.txt
 
-      # 7. Очистка
+      # 7. Очистка (тоже правим путь)
       - name: Cleanup secrets
-        if: always() # Выполнить даже если предыдущие шаги упали
+        if: always()
         run: |
-          rm -f vault_pass.txt inventory.ini ~/.ssh/id_rsa
+          rm -f ${{ env.WORK_DIR }}/vault_pass.txt inventory.ini ~/.ssh/id_ed25519
