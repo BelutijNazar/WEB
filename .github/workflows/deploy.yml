@@ -2,7 +2,7 @@ name: Deploy Infrastructure to Production
 
 on:
   push:
-    branches: [ "ansible", "main" ]
+    branches: [ "ansible" ]
   workflow_dispatch:
 
 jobs:
