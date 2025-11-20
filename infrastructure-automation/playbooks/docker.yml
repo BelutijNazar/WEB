@@ -1,6 +1,6 @@
 ---
 - name: install docker and docker compoe
-  hosts: local
+  hosts: all
   become: true
   gather_facts: true
   vars_files:
