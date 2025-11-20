@@ -3,8 +3,7 @@
   hosts: all
   become: true
   gather_facts: true
-  vars_files:
-    - ../group_vars/all.yml
+  
 
   roles:
     - docker_setup
