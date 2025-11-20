@@ -118,7 +118,7 @@ router.post('/login', async (req, res) => {
         // Чтобы ПОКАЗАТЬ АТАКУ, раскомментируйте этот блок
         // и закомментируйте блок "ЗАЩИЩЕННАЯ ВЕРСИЯ" ниже.
         
-        //const vulnerableQuery = "SELECT * FROM users WHERE nickname = '" + nickname + "'";
+        //const vulnerableQuery = "SELECT *, role FROM users WHERE nickname = '" + nickname + "'";
         //userResult = await db.query(vulnerableQuery);
         //isVulnerableMode = true;
         
@@ -174,7 +174,7 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { id: user.user_id, nickname: user.nickname, role: user.role, },
             process.env.JWT_SECRET,
-            { expiresIn: '15s' }
+            { expiresIn: '1h' }
         );
 
         // ВЫВОДИМ СООБЩЕНИЕ ОБ УСПЕШНОМ ВХОДЕ В КОНСОЛЬ БЭКЕНДА
@@ -219,6 +219,9 @@ router.get('/verify', (req, res) => {
       console.warn(`[AUTH-VERIFY] FAILED: Токен недействителен или истек. Ошибка: ${err.message}`);
       return res.status(403).json({ valid: false, message: 'Недействительный или истекший токен' });
     }
+    if (decoded.role !== 'admin') {
+            return res.status(403).json({ message: 'Доступ запрещен. Требуются права администратора.' });
+        }
     
     // Токен валиден
     console.log(`[AUTH-VERIFY] SUCCESS: Токен подтвержден для пользователя ${decoded.nickname}`);
