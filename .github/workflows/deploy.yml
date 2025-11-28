@@ -23,16 +23,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -y
-          # Устанавливаем ansible, sshpass и git (если нет)
           sudo apt-get install -y ansible sshpass git python3-pip
 
       # 2. Создание файлов с секретами (SSH ключ и Vault пароль)
       - name: Setup Secrets and SSH
         run: |
-          # ВАЖНО: Создаем файл пароля СРАЗУ ВНУТРИ рабочей папки
           echo "${{ secrets.VAULT_PASS }}" > ${{ env.WORK_DIR }}/vault_pass.txt
-          
-          # Создаем приватный ключ для SSH
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
@@ -40,7 +36,6 @@ jobs:
       # 3. Генерация динамического инвентаря
       - name: Generate Inventory
         run: |
-          # ИЗМЕНЕНИЕ: Создаем инвентарь ВНУТРИ папки проекта (рядом с group_vars)
           echo "[prod]" > ${{ env.WORK_DIR }}/inventory.ini
           echo "${{ secrets.DEPLOY_HOST }} ansible_user=${{ secrets.DEPLOY_USER }} ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ${{ env.WORK_DIR }}/inventory.ini
 
@@ -49,13 +44,26 @@ jobs:
         working-directory: ${{ env.WORK_DIR }}
         run: |
           echo "Checking syntax..."
-          # Теперь inventory.ini и vault_pass.txt лежат рядом, убираем ../
           ansible-playbook -i inventory.ini playbooks/base.yml --syntax-check --vault-password-file vault_pass.txt
           ansible-playbook -i inventory.ini playbooks/docker.yml --syntax-check --vault-password-file vault_pass.txt
           ansible-playbook -i inventory.ini playbooks/db.yml --syntax-check --vault-password-file vault_pass.txt
           ansible-playbook -i inventory.ini playbooks/cms.yml --syntax-check --vault-password-file vault_pass.txt
 
-      # 5. (Task list пропускаю, там аналогично убери ../)
+      # 5. Вывод списка задач
+      - name: List Tasks
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          echo "Listing tasks for Base Playbook:"
+          ansible-playbook -i inventory.ini playbooks/base.yml --list-tasks --vault-password-file vault_pass.txt
+          
+          echo "Listing tasks for Docker Playbook:"
+          ansible-playbook -i inventory.ini playbooks/docker.yml --list-tasks --vault-password-file vault_pass.txt
+          
+          echo "Listing tasks for DB Playbook:"
+          ansible-playbook -i inventory.ini playbooks/db.yml --list-tasks --vault-password-file vault_pass.txt
+
+          echo "Listing tasks for CMS Playbook:"
+          ansible-playbook -i inventory.ini playbooks/cms.yml --list-tasks --vault-password-file vault_pass.txt
 
       # 6. Боевое развертывание
       
@@ -83,5 +91,4 @@ jobs:
       - name: Cleanup secrets
         if: always()
         run: |
-          # Чистим файлы внутри папки
           rm -f ${{ env.WORK_DIR }}/vault_pass.txt ${{ env.WORK_DIR }}/inventory.ini ~/.ssh/id_rsa
